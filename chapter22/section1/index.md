@@ -1,6 +1,13 @@
 # **git命令**
 
 ![](media/7.png)
+
+## 概念
+
+* 工作区：work区
+* 暂存区：staged区
+* 仓库区：history区
+
 ## 基础
 
 ```
@@ -106,6 +113,77 @@ git checkout master
 
 git checkout 还有一种作用，如果工作区中的文件被误删，但如果本地仓库中还有，可以将仓库中的文件恢复到工作区，即可以从本地仓库中有而工作区没有的copy到工作区中。
 
+### 测试reset和checkout
+
+首先，对于两者来说，
+
+* 是否指定历史版本，
+  * 指定了历史版本，如命令加上了`head`，则基于`head`指向的历史版本对工作区进行处理
+  * 不指定历史版本，如命令没加`head`，则默认基于`head`指向的历史版本对工作区进行处理
+
+对于`reset`：
+
+* 是否指定文件，无需`--`符号，
+  * 指定则只对指定的文件进行处理
+  * 否则对所有的文件进行处理
+
+对于`checkout`：
+
+* 是否指定文件，
+  * 有`--`符号，则只对指定的文件进行处理
+  * 无`--`符号，则切换分支或移动head指针
+
+---
+
+创建如下环境，
+
+1. 创建a,b两文件，分别写入1，提交历史版本"1st"
+2. 更改a,b两文件，改为2，提交历史版本"2nd"
+
+此时head指向"2nd".
+
+修改a为3，add进staged区，再次修改a为4,
+
+回退到1st:
+1. 输入`git reset head^ --soft`
+此时查看a为4，b为2，各区状态如下：
+![](media/11.png)
+其实staged区里的a为2，b为2，而工作区的a为4，b为2，
+也就是说"2nd"历史版本里a,b的修改放到了staged区
+
+
+
+#### reset和checkout的区别
+
+`reset`: 回退，根据head指针指向的版本
+
+* `git reset --soft`:中间夹着的历史版本中的修改全都变成可commit的状态
+* `git reset --mixed`:默认，即不加`--mixed`的情况下，中间夹着的历史版本中的修改全都变成可add的状态
+* `git reset --hard`:work区、staged区、history区全回到指定版本刚被commit后的状态
+
+---
+
+如现在有1、2(*head)两个历史版本，此时工作区修改为12，然后add了，又在工作区修改13，
+
+即工作区也有修改(13)，staged区也有修改(12)，
+
+当只使用`git reset`时，默认是回退到`head`指向的历史版本(2)，由于现在当前版本没有历史版本，所有就不回退，只把`staged`区的修改回退到可`add`，但由于此时工作区的内容在之前`add`后又修改成了13，这时回退的12，无法覆盖工作区，因此在`reset`后工作区仍为13.
+
+当只使用`git reset head^`时，回退到head指向的历史版本(1),其中夹了一个历史版本(2)，那么(2)的历史版本记录的修改会变为可add放进工作区，一样的，若是工作区的更新时间比回退版本的新，那么回退的无法覆盖工作区。
+
+---
+
+`checkout`: 恢复，优先级(staged->history)
+
+1. 首先判断staged区是否有修改，有则将work区的修改恢复成staged区一样，结束，没有跳第2步；
+2. 根据head指针指向的history区版本，将work区的修改恢复成history区一样，结束。
+
+
+如a为1，add后，这时修改a为2，使用`git checkout -- a`可以让a恢复成staged区里的值，即1.
+
+如果staged区没有修改，就会将head指向的历史版本的a覆盖此时工作区中的a的值。
+
+
 ## rm
 
 ```
@@ -197,9 +275,16 @@ git remote set-url origin git@gitee.com:ber3ud4/learngit.git 更改remote链接
 >git branch -M main  //修改当前分支名为main（因为说以前的master有黑人奴隶歧视啥的）
 
 git push -u origin master    
->origin代表远程仓库，将本地的master分支推送到远程库的分支，-u表示同时把本地的master分支和远程同名的master分支关联起来，在以后的推送或者拉取时就可以简化命令，第一次push必须要加-u，否则会报错，推送时，要指定本地分支，这样，Git就会把该分支推送到远程库对应的远程分支上（在之前，首先要add,commit到本地仓库中）
+>origin代表远程仓库，将本地的当前分支推送到远程库的master分支，-u表示同时把本地的master分支和远程同名的master分支关联起来，在以后的推送或者拉取时就可以简化命令，第一次push必须要加-u，否则会报错，推送时，要指定本地分支，这样，Git就会把该分支推送到远程库对应的远程分支上（在之前，首先要add,commit到本地仓库中）
 
-或者git push --set-upstream origin branch1 关联远程分支和当前本地分支
+或者git push --set-upstream origin branch1 关联远程branch1分支和当前本地分支
+
+* 如果远程新建了一个分支，本地没有该分支。
+   >可以利用 git checkout --track origin/branch_name ，这时本地会新建一个分支名叫 branch_name ，会自动跟踪远程的同名分支 branch_name。
+   `git checkout --track origin/branch_name`
+* 如果本地新建了一个分支 branch_name，但是在远程没有。
+   >这时候 push 和 pull 指令就无法确定该跟踪谁，一般来说我们都会使其跟踪远程同名分支，所以可以利用 git push --set-upstream origin branch_name ，这样就可以自动在远程创建一个 branch_name 分支，然后本地分支会 track 该分支。后面再对该分支使用 push 和 pull 就自动同步。
+   `git push --set-upstream origin branch_name`
 
 ## **冲突**
 https://www.cnblogs.com/gavincoder/p/9071959.html
