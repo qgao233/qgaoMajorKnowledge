@@ -2,13 +2,13 @@
 
 ![](media/7.png)
 
-## 概念
+## 1 概念
 
 * 工作区：work区
 * 暂存区：staged区
 * 仓库区：history区
 
-## 基础
+## 2 基础
 
 ```
 git init             创建本地仓库
@@ -34,9 +34,9 @@ git reflog           查看git所有分支操作（历史记录操作，每一�
 
 
 
-## 版本回退
+## 3 版本回退
 
-### reset
+### 3.1 reset
 
 ```
 git reset            版本回退（unlink...?需要将编辑器关闭）
@@ -68,17 +68,17 @@ git reset命令既可以回退版本，也可以把暂存区的修改回退到�
 原来指向的提交记录就跟从来没有提交过一样。
 >在reset后， C2 所做的变更还在，但是处于未加入暂存区状态(unstage)。可以想像成同时移动了head指针和分支名main的指针到C1，但不同的是，reset会把C2更改过的放进unstage，而如果移动指针的话，工作区不会有什么改变。
 
-### revert
+### 3.2 revert
 
 为了撤销更改并分享给别人，需要使用 git revert。
 
 ![](media/6.png)
 
-新提交记录 C2' 引入了更改 —— 这些更改刚好是用来撤销 C2 这个提交的。也就是说 C2' 的状态与 C1 是相同的。
+新提交记录 `C2'` 引入了更改 —— 这些更改刚好是用来撤销 `C2` 这个提交的。也就是说 `C2'` 的状态与 `C1` 是相同的。
 
 revert 之后就可以把你的更改推送到远程仓库与别人分享啦。
 
-### checkout         
+### 3.3 checkout         
 
 有切换分支和撤销修改两种意思，当后面跟的是分支名，就表示切换，后面跟的是路径就是撤销，如果撤销文件名和分支名相同，需要在其前面加上“-- ”注意有一个空格。所以一般为了好分辨，如果是路径就加上“-- ”，如果是切换分支就不加。
 
@@ -113,7 +113,7 @@ git checkout master
 
 git checkout 还有一种作用，如果工作区中的文件被误删，但如果本地仓库中还有，可以将仓库中的文件恢复到工作区，即可以从本地仓库中有而工作区没有的copy到工作区中。
 
-### 测试reset和checkout
+### 3.4 测试reset和checkout
 
 首先，对于两者来说，
 
@@ -184,7 +184,28 @@ git checkout 还有一种作用，如果工作区中的文件被误删，但如�
 如果staged区没有修改，就会将head指向的历史版本的a覆盖此时工作区中的a的值。
 
 
-## rm
+### 3.5 restore
+
+`git restore --stage` 和`git restore` 两个命令，总结如下，
+
+1、文件在暂存区且工作区未作修改的情况
+
+使用`git restore --staged` 把文件从暂存区移动到工作区，即文件不被追踪；
+
+2、文件在暂存区且工作区又修改过的情况
+
+* 使用`git restore --staged` 把文件从暂存区移动到工作区，且不会撤销修改的内容；
+  >同`git reset`
+* 使用`git restore` 文件仍在暂存区且会撤销文件修改的内容；
+  >同`git checkout`
+
+3、文件在本地代码库且工作区又修改过的情况
+
+* 使用`git add` 把文件重新放到暂存区，且保留文件的修改；
+* 使用`git restore` 文件仍在本地代码库且会撤销文件的修改；
+  >同`git checkout`
+
+## 4 rm
 
 ```
 git rm          删除本地连同版本库里的某文件，且需要commit一次
@@ -198,7 +219,7 @@ git rm -r --cached a    删除a目录，目录名有空格命令行需要用"\"�
 
 
 
-## **分支**
+## 5 分支
 
 git branch name   创建分支name，创建了分支后如果在工作区修改后且并未add、commit，如果这时想切换到其他分支，请**务必stash**，否则在当前的修改会覆盖你想切换的分支中的相关文件。
 
@@ -218,7 +239,7 @@ git merge --no-ff 禁用fast-forward(快进模式)表示普通合并，合并后
 git merge --no-ff -m "merge with no-ff" dev
 ![](media/4.png)
 
-### stash
+### 5.1 stash
 
 git stash         将当前分支的工作现场储藏起来
 
@@ -239,7 +260,7 @@ git checkout -b branch-name origin/branch-name
 
 本地没有某分支，在本地创建和远程分支对应的分支，使用这个，本地和远程分支的名称最好一致
 
-### checkout
+### 5.2 checkout切换分支
 
 git checkout 当它是切换分支意义的时候，实质上是移动的HEAD指针。
 
@@ -249,7 +270,7 @@ git branch -f main HEAD~3 将main分支指向head的父结点的父结点的父�
 
 git checkout -b dev  创建dev分支，并切换到dev分支
 
-## **远程**
+## 6 远程
 
 ssh-keygen -t rsa -C "邮箱" 生成密钥，如果远程仓库没有保存你生成的密钥，你将只能pull，而不能push
 
@@ -262,7 +283,7 @@ ssh-keygen -t rsa -C "邮箱" 生成密钥，如果远程仓库没有保存你�
 >每次commit时都会引用这两条信息，以说明是谁提交了代码。
 
 
-**连接远程库**
+### 6.1 连接远程库
 
 git remote add origin <git@gitee.com:ber3ud4/learngit.git>（首先本地仓库已经建立好了）
 
@@ -279,6 +300,8 @@ git push -u origin master
 
 或者git push --set-upstream origin branch1 关联远程branch1分支和当前本地分支
 
+### 6.2 关联本地分支与远程分支
+
 * 如果远程新建了一个分支，本地没有该分支。
    >可以利用 git checkout --track origin/branch_name ，这时本地会新建一个分支名叫 branch_name ，会自动跟踪远程的同名分支 branch_name。
    `git checkout --track origin/branch_name`
@@ -286,7 +309,7 @@ git push -u origin master
    >这时候 push 和 pull 指令就无法确定该跟踪谁，一般来说我们都会使其跟踪远程同名分支，所以可以利用 git push --set-upstream origin branch_name ，这样就可以自动在远程创建一个 branch_name 分支，然后本地分支会 track 该分支。后面再对该分支使用 push 和 pull 就自动同步。
    `git push --set-upstream origin branch_name`
 
-## **冲突**
+## 7 冲突
 https://www.cnblogs.com/gavincoder/p/9071959.html
 
 只有**分支合并**会产生**冲突**
@@ -307,7 +330,7 @@ https://www.cnblogs.com/gavincoder/p/9071959.html
 
 这就是多人协作的工作模式，一旦熟悉了，就非常简单。
 
-## **标签**
+## 8 标签
 
 git tag \<tagname>  用于新建一个标签，默认为HEAD，也可以指定一个commit id
 
@@ -331,7 +354,7 @@ git push origin :refs/tags/v0.9
 
 同一台电脑设置多个公钥与不同GITHUB帐号交互，在config文件中只需要更改host即可，git remote add git@host:账户名/仓库名.git，其中的host用config中的host
 
-## **删除仓库**
+## 9 删除仓库
 删除本地仓库
 
 方法：
@@ -349,7 +372,7 @@ git push origin :refs/tags/v0.9
 在github网站上找到tab上的settings,然后找到删除仓库链接即可。
 
 
-## 总结
+## 10 总结
 
 说白了，git的提交记录就是一颗颗结点组成的树，
 

@@ -1,4 +1,4 @@
-# git pull
+# git 远程
 
 
 ## git从远程pull
