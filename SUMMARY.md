@@ -194,4 +194,5 @@
    * [24.3 分布式id](chapter24/section3/index.md)
    * [24.4 应用](chapter24/section4/index.md)
 * [25. 大数据篇]()
+  * [25.0 基础](chapter25/section1/index.md)
   * [25.1 hadoop](https://qgao233.github.io/qgaoHadoopStudy)
