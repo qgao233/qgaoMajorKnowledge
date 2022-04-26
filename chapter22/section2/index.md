@@ -1,74 +1,86 @@
-# git 远程
+# **raft协议**
+## **复制状态机**
+![](media/1.png)
 
+复制状态机+一致性协议：解决了分布式系统中的高可用以及容错性，比如Zookeeper，HDFS等。
 
-## git从远程pull
+1. 所谓复制状态机，就是说每一台服务器上维持着一份持久化Log，然后 通过一致性协议算法，保证每一个实例中的Log保持一致，并且顺序存放，这样客户端就可以在每一个实例中读取到相同的数据。
 
-git pull 就是 git fetch 和 git merge 的缩写！
-```
-git init
+2. 如上图所示，有一个Consensus Module就是一致性协议模块，它可以是Paxos算法的实现或者Raft算法。
 
-git remote add origin git@github.com-qinzhu:614756773/huoguo.git
-(git remote set-url origin 更改后的链接)
-```
+重要概念
 
->pull需要当前分支与远程分支有联系才行。
+几个状态以及它的RPC调用，它主要有两个RPC通信，分别是
 
-pull远程的所有分支，直接使用git pull，后不加参数。
+- RequestVote RPC：负责选举
+- AppendEntries RPC：数据的交互。
 
-或者只pull某条远程的分支：
-```
-git pull origin master    pull远程master分支，默认将当前分支和远程master分支合并
-```
+这里需要着重理解Term，对于每一个leader，都会有一个Term，它会将这个term带到log日志中的entry中，代表当前entry是在哪一个term时期写入。
 
-git branch -r 查看远程分支
->远程分支是在本地的分支，与远程仓库中的分支一一对应，只有当远程仓库中的分支发生了变化，通过pull才能修改本地中远程分支的指向。
->
->fetch时下载的内容就在远程分支下
+## **协议的三个阶段**
+1. 选主阶段
 
-如果还想拉其他分支，需要pull
+2. 日志复制阶段
 
-如，我还想pull远程的dev分支
+3. 安全状态
 
-不过在这之前，需要新建dev(或其他名字，最好和远程一样),再进入dev分支，再：
-```
-git pull origin dev
-```
-再查看git branch -r 会发现多了一个origin/dev的远程分支，
+![在这里插入图片描述](media/2.png)
 
-同时远程dev和本地dev合并
+由上述图片例子开始描述各个阶段，
 
-如果要push的话，可以用
+当前节点的term（时期）为4，state为leader（为主节点），commitIndex为0，总共有5个实例。
 
-git push --set-upstream origin dev将本地分支和远程分支彻底关联起来
+### **选主阶段**
+节点故障：主节点和其他子节点之间通过心跳机制保持联系，如果在一段时间内收不到心跳报告，则将该节点判为故障。
 
-## git pull注意事项
-git pull这个命令，我们经常会用，它默认是使用**merge**方式将远端别人的修改拉到本地；
+1. 如果从节点故障，那么待故障恢复之后，就会去主节点同步日志进行故障恢复。
 
-如果带上上参数git pull -r，就会使用**rebase**的方式将远端修改拉到本地。
+2. 如果主节点故障，那么会重新进入选举阶段， 
 
-这二者最直观的区别就是：merge方式合并的分支会有很多「分叉」，而rebase方式合并的分支就是一条直线。
+每一个实例会随机sleep一个timeout，timeout结束后，将当前的term加1，然后开始投票，
 
-对于多人协作，merge方式并不好，多分支画面肯定杂乱，杂乱就意味着很容易出问题，所以一般来说，实际工作中更**推荐使用rebase**方式合并代码。
+1. 选举最大的serverid所在的那台机器, 
+1. 如果自己接收到的投票小于自己的term，那么投反对票，即选举自己。
+1. 如果某台机器有超过半数以上的实例同意，那么将其选举为leader。
+1. 如果选举失败，则会将当前term再加1进行选举，直到选举成功。
 
-![](media/1.jpg)
+之所以随机sleep一个time，是因为这样可以加快选举的流程，在一般情况下，只要网络状态良好，先timeout的实例先进行选举，这样只需要一轮选举就选举出leader，避免了由于相互选举而再次进入选举的情况。
 
-我站在dev分支，使用git rebase master，把dev接到master分支之上。Git 是这么做的：
+### **数据同步阶段**
+选举完成之后，
 
-首先，找到这两条分支的最近公共祖先LCA，然后从master节点开始，重演LCA到dev几个commit的修改，如果这些修改和LCA到master的commit有冲突，就会提示你手动解决冲突，最后的结果就是把dev的分支完全接到master上面。
+1. 客户端与leader交互写入数据entry，这时leader会在自己的log的第一个空位index中写入。
+1. 通过AppendEntries RPC把当前index的entry以及lastest commiteid（不是当前的commitId）发送给每一个follower从节点，
+1. 如果follower接收到的lastest commiteid等于当前实例的最新commitId，代表<=该ID的所有entry已经被commit，此时follower返回true，否则返回false,
+1. 如果超过半数的follower向leader返回true，那么代表当前entry写入成功。
+1. 返回false的实例，可能是因为网络原因或者故障恢复的原因，数据没有正确同步，此时leader会从最后一个entry开始向前遍历，知道找到故障实例对应的entry，然后开始恢复数据。
 
-## push
+下图举例说明：
 
-git push 不带任何参数时的行为与 Git 的一个名为 push.default 的配置有关。它的默认值取决于你正使用的 Git 的版本，在项目中进行推送之前，最好检查一下这个配置。
+![](media/3.png)
 
-当push成功时，远程仓库的分支会更新，本地仓库中的远程分支origin/***也会更新。
+leader的当前index=8，term为3，x=4，开始同步数据，
 
-### 历史偏离
+会收到第一个（包括自己），第三个和第五个实例的同意，大于半数的实例返回true，当前entry commit，
 
-假设你周一克隆了一个仓库，然后开始研发某个新功能。到周五时，你新功能开发测试完毕，可以发布了。但是 —— 天啊！你的同事这周写了一堆代码，还改了许多你的功能中使用的 API，这些变动会导致你新开发的功能变得不可用。但是他们已经将那些提交推送到远程仓库了，因此你的工作就变成了基于项目旧版的代码，与远程仓库最新的代码不匹配了。
+第二个和第四个实例将会返回false，此时leader会从最后一个entry开始从后向前遍历，将当前index发送给返回false的实例，直到它返回true开始同步数据。
 
-这种情况下,历史偏离有许多的不确定性，Git 是不会允许你 push 变更的。实际上它会强制你先合并远程最新的代码，然后才能分享你的工作。
+比如刚开始leader发送index=8，term=3，x=4的数据给第二个实例，它将会返回false，接着发送前一个entry，也返回false，直到发送index=6，term=3，y=7的数据时返回true，开始正确同步数据，第四个实例也同理。
 
-即先pull再push。
+#### **节点宕机**
+数据同步的时候节点发生宕机，如图所示：
 
-![](media/2.png)
+![](media/4.png)
+
+对于a~f的实例，可能是因为某种故障而展现出的不同情况，它们都有可能成为leader。
+
+以其中的（f）实例为例解释一下故障发生的原因，从而变成了从节点。
+
+- （f）实例之前可能在term=2时是leader节点，在写入数据的时候，它只写入了自己的log后就发生宕机，
+- 在一个短暂的时间之后，它故障恢复，并且有再次被选举为leader，并且当前term=3，此时它写入数据，但是又在写入自己的log日志后但未发送给其他节点的时候发生故障宕机。
+
+所以就造成了上述的现象，对于其他实例的故障也类似。
+
+从上图可以看出，每一个实例都维护这一个最小committed index，代表着小于等于当前index的数据已经全部被commit，那么如果在收到leader的提交的index的时候会进行比较，此时会出现一个有意思的问题呢，之前提交的log日志可能被修改，或者更准确的说被覆盖。比如说(f)的term为1后面的term.
+
 
