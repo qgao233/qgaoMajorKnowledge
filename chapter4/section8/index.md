@@ -134,6 +134,51 @@ public static ExecutorService newCachedThreadPool() {
 
 `CachedThreadPool`允许创建的线程数量为 `Integer.MAX_VALUE` ，可能会创建大量线程，从而导致 `OOM`。
 
+### 2.4 ScheduledThreadPoolExecutor
+
+`ScheduledThreadPoolExecutor` 主要用来在**给定的延迟后**运行任务，或者**定期**执行任务。 
+
+>这个在实际项目中基本不会被用到，也不推荐使用，简单了解一下思想即可。
+
+#### 2.4.1 运行机制
+
+`ScheduledThreadPoolExecutor` 使用的任务队列 `DelayQueue` 封装了一个 `PriorityQueue`，PriorityQueue 会对队列中的任务进行排序：
+
+1. 执行所需**时间短的放在前面**先被执行(`ScheduledFutureTask` 的 `time` 变量小的先执行)，
+2. 如果执行所需时间相同则**先提交的任务**将被先执行(`ScheduledFutureTask` 的 `squenceNumber` 变量小的先执行)。
+
+![](media/1.png)
+
+`ScheduledThreadPoolExecutor` 的执行主要分为2大部分：
+
+1. 当调用 `ScheduledThreadPoolExecutor` 的 `scheduleAtFixedRate()` 方法或者 `scheduleWithFixedDelay()` 方法时，会向 `ScheduledThreadPoolExecutor` 的 `DelayQueue` 添加一个实现了 `RunnableScheduledFuture` 接口的 `ScheduledFutureTask` 。
+2. 线程池中的线程从 `DelayQueue` 中获取 `ScheduledFutureTask`，然后执行任务。
+
+#### 2.4.2 执行周期任务的步骤
+
+`ScheduledThreadPoolExecutor` 为了实现周期性的执行任务，对 `ThreadPoolExecutor`做了如下修改：
+
+* 使用 `DelayQueue` 作为任务队列；
+* 获取任务的方不同；
+* 执行周期任务后，增加了额外的处理。
+
+![](media/2.png)
+
+1. 线程 1 从 `DelayQueue` 中获取已到期的 `ScheduledFutureTask(DelayQueue.take())`。到期任务是指 `ScheduledFutureTask`的 `time` 大于等于当前系统的时间；
+2. 线程 1 执行这个 `ScheduledFutureTask`；
+3. 线程 1 修改 `ScheduledFutureTask` 的 `time` 变量为下次将要被执行的时间；
+4. 线程 1 把这个修改 time 之后的 `ScheduledFutureTask` 放回 `DelayQueue` 中（`DelayQueue.add()`）。
+
+#### 2.4.3 ScheduledThreadPoolExecutor 和 Timer 的比较
+
+-|Timer|ScheduledThreadPoolExecutor
+:-|:-|:-
+对系统时钟的变化|敏感|不敏感
+线程数量|只有一个执行线程，因此长时间运行的任务可以延迟其他任务|可以配置任意数量的线程。 此外，如果你想（通过提供 ThreadFactory），你可以完全控制创建的线程;
+运行时异常|在TimerTask 中抛出的运行时异常会杀死一个线程，从而导致 Timer 死机:-( ...即计划任务将不再运行。|不仅捕获运行时异常，还允许您在需要时处理它们（通过重写 afterExecute 方法ThreadPoolExecutor）。抛出异常的任务将被取消，但其他任务将继续运行。
+
+综上，在 JDK1.5 之后，你没有理由再使用 Timer 进行任务调度了。
+
 ## 3 Excutor使用
 
 1. 主线程首先要创建实现 `Runnable` 或者 `Callable` 接口的任务对象。

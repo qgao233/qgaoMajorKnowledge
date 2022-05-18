@@ -39,7 +39,9 @@
 
 运行结果 ： ![http://img.mukewang.com/539e94a500014f0101930052.jpg](media/Aspose.Words.aae657c5-313e-4d01-98de-fab9ea196422.007.jpeg)
 
-Souter.Sinner inner = new Souter.Sinner();
+>在外面初始化
+>* 普通成员内部类：Inner inner = new Outer().new Inner();
+>* 静态成员内部类：Souter.Sinner inner = new Souter.Sinner();
 
 
 ## **方法内部类**
