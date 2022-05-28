@@ -1,6 +1,7 @@
-﻿
-# Collections&Arrays
-collections：
+﻿# Collections&Arrays
+
+## 1 collections
+
 ```
 void reverse(List list)//反转
 void shuffle(List list)//随机排序
@@ -16,7 +17,9 @@ int frequency(Collection c, Object o)//统计元素出现次数
 int indexOfSubList(List list, List target)//统计target在list中第一次出现的索引，找不到则返回-1，类比int lastIndexOfSubList(List source, list target)
 boolean replaceAll(List list, Object oldVal, Object newVal)//用新元素替换旧元素
 ```
-Arrays
+
+## 2 Arrays
+
 ```
 copyOfRange(int[] original, int from, int to)//返回某个范围的元素形成的数组
 copyOf(int[] original, int newLength)//复制数组，内部实际调用System.arraycopy
@@ -26,3 +29,19 @@ binarySearch
 equals
 fill
 ```
+
+### 2.1 System.arraycopy
+
+`System.arraycopy(Object src, int srcPos, Object dest, int destPos, int length);`
+
+从`src`中索引`srcPos`开始的`length`个item复制到`dest`中索引为`destPos`的位置上。
+
+>* 浅拷贝：假设B复制了A，当修改A时，B也跟着变了
+>* 深拷贝：B没变
+
+该方法针对不同类型复制的类型不同：
+
+* 浅拷贝：二维数组
+* 深拷贝：基本数据类型(int/long...)、Object类型(自定义的)、String类型
+
+该方法**线程不安全**，参考[System.arraycopy线程安全问题](https://qgao233.github.io/qgaoFacedProblems/work/5_28/)
