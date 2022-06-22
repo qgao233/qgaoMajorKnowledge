@@ -65,6 +65,7 @@
    * [5.4 类加载器](chapter5/section4/index.md)
    * [5.5 创建对象](chapter5/section5/index.md)
    * [5.6 jvm垃圾回收](chapter5/section6/index.md)
+   * [5.7 JIT编译器](chapter5/section7/index.md)
 * [6. spring篇]()
    * [6.1 IOC](chapter6/section1/index.md)
    * [6.2 AOP](chapter6/section2/index.md)

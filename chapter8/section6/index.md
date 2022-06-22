@@ -33,11 +33,11 @@ for(a from 外层表){
 ```
 select * from a left join b on a.id=b.id  
 union  
-select * from a right join b on a.cid=b.id;  
+select * from a right join b on a.id=b.id;  
 ```
 ![](media/3.png)
 ```
-select * from a left join b on a.id=b.id where b.cid is null  
+select * from a left join b on a.id=b.id where b.id is null  
 union  
-select * from a right join b on a.cid=b.id where a.id is null;  
+select * from a right join b on a.id=b.id where a.id is null;  
 ```

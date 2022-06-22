@@ -4,11 +4,11 @@
 
 int可以存储4个字节大小的数据，但是它的宽度是5，即如果存储的数据的宽度小于5，会自动在前面补0，凑齐“个十百千万”的5位数字。
 
-tinyint 1
-smallint 2
-mediumint 3
-int 4
-bigint 8
+* tinyint 1
+* smallint 2
+* mediumint 3
+* int 4
+* bigint 8
 
 ---
 
