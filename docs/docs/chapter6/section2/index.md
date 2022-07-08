@@ -9,7 +9,7 @@ spring的AOP功能是通过**JavaSE动态代理**和**cglib**实现的
 * cglib：本身是动态字节码生成工具，可以对没有实现业务接口的对象进行增强。
 
 
-\<aop:config>是Spring AOP配置的根元素，其中有个属性为proxy-target-class
+`<aop:config>`是Spring AOP配置的根元素，其中有个属性为proxy-target-class
 
 如果为true,则使用cglib生成代理对象，相反为false，
 
@@ -20,7 +20,7 @@ spring的AOP功能是通过**JavaSE动态代理**和**cglib**实现的
 ## **使用实例**
 
 1. 导入aop模块：Spring AOP：（spring-aspects）
-1. 定义一个业务逻辑类（MathCalculator）；在业务逻辑运行的时候讲日志进行打印（方法之前、方法运行结束、方法出现异常等)
+1. 定义一个业务逻辑类（MathCalculator）；在业务逻辑运行的时候将日志进行打印（方法之前、方法运行结束、方法出现异常等)
 1. 定义一个日志切面类（LOgAspects）；切面类里面的方法需要动态感知MathCalculator.div运行到哪里然后执行对应的切面方法；
          通知方法：
                  前置通知(@Before)：logStart:在目标方法div()运行之前运行
