@@ -45,6 +45,7 @@
    * [3.10 装饰器模式](chapter3/section10/index.md)
    * [3.11 观察者模式](chapter3/section11/index.md)
    * [3.12 门面模式](chapter3/section12/index.md)
+   * [3.13 对象池模式、多例模式、享元模式的比较](chapter3/section13/index.md)
 * [4. 多线程篇]()
    * [4.1 使用多线程原因](chapter4/section1/index.md)
    * [4.2 带来的问题](chapter4/section2/index.md)
