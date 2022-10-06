@@ -15,7 +15,7 @@ https://blog.csdn.net/feichitianxia/article/details/107997795
 
 ![](media/1.png)
 
-## 1.1 索引最左前缀原则
+### 1.1 索引最左前缀原则
 
 常见联合索引
 索引index1:(a,b,c)，只会走a、a,b、a,b,c 三种类型的查询，其实这里说的有一点问题，a,c也走，但是只走a字段索引，不会走c字段。
@@ -26,7 +26,9 @@ https://blog.csdn.net/feichitianxia/article/details/107997795
 
 索引是有序的，index1索引在索引文件中的排列是有序的，首先根据a来排序，然后才是根据b来排序，最后是根据c来排序，
 
-像select * from table where a = '1' and b > ‘2’ and c='3' 这种类型的sql语句，在a、b走完索引后，c肯定是无序了，所以c就没法走索引，数据库会觉得还不如全表扫描c字段来的快。（感觉这一块说的始终有点牵强，无序又怎样，从剩下的里面挨着挨着找不就好了吗？）
+像`select * from table where a = '1' and b > ‘2’ and c='3'` 这种类型的sql语句，在a、b走完索引后，c肯定是无序了，所以c就没法走索引，数据库会从根据a、b条件已经查出来的结果中扫描c字段。
+
+>当条件只有一个字段，且是范围查询时，可对该字段建立索引，但实际查询并不一定走索引，数据库会进行分析是否走索引，可通过explain配合[该篇博客](https://blog.csdn.net/weixin_32848617/article/details/113284040)进行理解。
 
 ## 2 聚簇索引和非聚簇索引
 
